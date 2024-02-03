@@ -1,0 +1,29 @@
+# HaaS
+
+version: "3.8"
+services:
+  haas:
+    #build: /home/mikrom/docker/haas/
+    container_name: haas
+    image: mikromcz/haas
+    restart: unless-stopped
+    hostname: haas
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - DEVICE_TOKEN=$DEVICE_TOKEN
+      - LOG_LEVEL=info
+    ports:
+      - 2222:2222
+networks: {}
+x-dockge:
+  urls:
+    - https://haas.nic.cz/proxy/
+    - https://gitlab.nic.cz/haas/proxy
+    - https://gitlab.nic.cz/haas/proxy/-/blob/master/Dockerfile
+    - https://docs.docker.com/engine/reference/commandline/build/
+    - https://docs.docker.com/compose/compose-file/compose-file-v3/
+    - https://hub.docker.com/r/mikromcz/haas
+    - https://haas.nic.cz/device/4965/sessions/

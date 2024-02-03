@@ -1,0 +1,10 @@
+# General
+*.bak
+
+# VisualStudio
+.vscode/
+
+# HaaS
+.env
+pull.sh
+push.sh
