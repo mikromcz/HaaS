@@ -3,7 +3,6 @@
 version: "3.8"
 services:
   haas:
-    #build: /home/mikrom/docker/haas/
     container_name: haas
     image: mikromcz/haas
     restart: unless-stopped
