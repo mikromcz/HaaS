@@ -11,6 +11,10 @@ ENV PIP_ROOT_USER_ACTION="ignore"
 # /usr/local/lib/python3.12/site-packages/twisted/conch/ssh/transport.py:116: CryptographyDeprecationWarning: CAST5 has been deprecated
 ENV PYTHONWARNINGS="ignore:.*:DeprecationWarning"
 
+# Supress "CRITICAL twisted 'channel open failed, direct-tcpip is not allowed'" message - no solution :/
+# https://forum.turris.cz/t/haas-proxy-channel-failed/14699
+# https://gitlab.nic.cz/haas/proxy/-/issues/19
+
 # Set a default LOG_LEVEL if not provided
 ENV LOG_LEVEL=info
 
