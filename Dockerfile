@@ -28,10 +28,10 @@ RUN pip3 install --no-cache haas-proxy
 # Some labels with credit to CZ.NIC
 LABEL org.opencontainers.image.title="HaaS (Honeypot as a Service)"
 LABEL org.opencontainers.image.description=" \
-It does not matter whether you are a volunteer, an organization or a company. \
-Anyone can participate in research project Honeypot as a Service (HaaS) and \
-contribute to the improvement of cyber security and preparedness for cyber attacks. \
-Additionally, you will learn interesting facts about the attacks made on your device."
+    It does not matter whether you are a volunteer, an organization or a company. \
+    Anyone can participate in research project Honeypot as a Service (HaaS) and \
+    contribute to the improvement of cyber security and preparedness for cyber attacks. \
+    Additionally, you will learn interesting facts about the attacks made on your device."
 LABEL org.opencontainers.image.url=https://haas.nic.cz
 LABEL org.opencontainers.image.source=https://gitlab.nic.cz/haas/proxy/
 LABEL org.opencontainers.image.licenses=GPL-3.0
@@ -53,7 +53,7 @@ EXPOSE 2222
 # Final command. Without square brackets it is run from shell, bracketed version never work for me.
 # python[3] -m haas_proxy --pidfile /var/run/haas.pid haas_proxy -l /var/log/haas.log --log-level warning --device-token XXX
 
-# The form with brackets is generally used for commands that don't require shell processing. 
+# The form with brackets is generally used for commands that don't require shell processing.
 # If your Twisted application is not working with the array form, it might be due to the way it handles arguments.
 # In this case, you can use the shell form of CMD and specify your command as a single string
 #CMD ["python3", "-m", "haas_proxy", "--nodaemon", "haas_proxy", "--device-token", "${DEVICE_TOKEN}"]
