@@ -14,6 +14,7 @@ ENV PYTHONWARNINGS="ignore:.*:DeprecationWarning"
 # Supress "CRITICAL twisted 'channel open failed, direct-tcpip is not allowed'" message - no solution :/
 # https://forum.turris.cz/t/haas-proxy-channel-failed/14699
 # https://gitlab.nic.cz/haas/proxy/-/issues/19
+ENV TWISTED_LOG_LEVEL="error"
 
 # Set a default LOG_LEVEL if not provided
 ENV LOG_LEVEL=info
@@ -59,4 +60,9 @@ EXPOSE 2222
 #CMD ["python3", "-m", "haas_proxy", "--nodaemon", "haas_proxy", "--device-token", "${DEVICE_TOKEN}"]
 
 #CMD python3 -m haas_proxy --nodaemon --pidfile /haas/haas.pid haas_proxy --device-token ${DEVICE_TOKEN}
-CMD python3 -m haas_proxy --nodaemon --pidfile /haas/haas.pid haas_proxy --device-token ${DEVICE_TOKEN} --log-level $LOG_LEVEL | tee /proc/1/fd/1
+
+# This works, but logs are not visible with "docker logs <container>"
+#CMD python3 -m haas_proxy --nodaemon --pidfile /haas/haas.pid haas_proxy --device-token ${DEVICE_TOKEN} --log-level $LOG_LEVEL | tee /proc/1/fd/1
+
+# Filter out "direct-tcpip is not allowed" messages
+CMD python3 -m haas_proxy --nodaemon --pidfile /haas/haas.pid haas_proxy --device-token ${DEVICE_TOKEN} --log-level $LOG_LEVEL 2>&1 | grep -v "direct-tcpip is not allowed" | tee /proc/1/fd/1

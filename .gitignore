@@ -4,6 +4,9 @@
 # VisualStudio
 .vscode/
 
+# Docker
+compose.y[a]ml
+
 # HaaS
 .env
 pull.sh
