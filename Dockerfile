@@ -23,8 +23,8 @@ ENV LOG_LEVEL=info
 RUN apk add --update --no-cache openssh sshpass
 
 # Install haas_proxy
-RUN pip3 install --upgrade pip
-RUN pip3 install --no-cache haas-proxy
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-cache haas-proxy
 
 # Some labels with credit to CZ.NIC
 LABEL org.opencontainers.image.title="HaaS (Honeypot as a Service)"
@@ -41,15 +41,21 @@ LABEL org.opencontainers.image.base.name=python:alpine
 # Those labels are added during build to be sure they are correct
 # $ docker build -t haas --label "org.opencontainers.image.version"="2.0.2" --label "org.opencontainers.image.created"="$(date +'%m/%d/%Y')" .
 
+# Create working directory
+WORKDIR /haas
+
 # Run as non-root user, but we have to add permisions for /haas/haas.pid file (and twisted plugins)
 RUN chmod -R 777 /usr/local/lib/python3.12/site-packages/twisted/plugins/ /usr/local/lib/python3.12/site-packages/haas_proxy/twisted/plugins/ && \
-    mkdir /haas && \
     adduser -D haas && \
     chown haas -R /haas
 USER haas
 
 # Expose haas port
 EXPOSE 2222
+
+# Healthcheck to see if cron is running
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
+    CMD pgrep -f "haas_proxy" || exit 1
 
 # Final command. Without square brackets it is run from shell, bracketed version never work for me.
 # python[3] -m haas_proxy --pidfile /var/run/haas.pid haas_proxy -l /var/log/haas.log --log-level warning --device-token XXX
@@ -65,4 +71,6 @@ EXPOSE 2222
 #CMD python3 -m haas_proxy --nodaemon --pidfile /haas/haas.pid haas_proxy --device-token ${DEVICE_TOKEN} --log-level $LOG_LEVEL | tee /proc/1/fd/1
 
 # Filter out "direct-tcpip is not allowed" messages
-CMD python3 -m haas_proxy --nodaemon --pidfile /haas/haas.pid haas_proxy --device-token ${DEVICE_TOKEN} --log-level $LOG_LEVEL 2>&1 | grep -v "direct-tcpip is not allowed" | tee /proc/1/fd/1
+#CMD python3 -m haas_proxy --nodaemon --pidfile /haas/haas.pid haas_proxy --device-token ${DEVICE_TOKEN} --log-level $LOG_LEVEL 2>&1 | grep -v "direct-tcpip is not allowed" | tee /proc/1/fd/1
+
+CMD ["sh", "-c", "python3 -m haas_proxy --nodaemon --pidfile /haas/haas.pid haas_proxy --device-token ${DEVICE_TOKEN} --log-level ${LOG_LEVEL}"]
