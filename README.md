@@ -208,7 +208,7 @@ This is an unofficial Docker implementation. For:
 ## Version Information
 
 - **Current Version:** 2.0.2 (released 2020-07-29)
-- **Base Image:** `python:3.12-alpine`
+- **Base Image:** `python:3.14-alpine`
 - **HaaS Proxy:** Latest version from PyPI
 
 ## Links

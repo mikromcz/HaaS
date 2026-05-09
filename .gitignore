@@ -4,10 +4,14 @@
 # VisualStudio
 .vscode/
 
+# Claude
+.claude/
+
 # Docker
 compose.y[a]ml
 
 # HaaS
+/vuln-report/
 .env
 pull.sh
 push.sh
