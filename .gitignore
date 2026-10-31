@@ -15,3 +15,6 @@ compose.y[a]ml
 .env
 pull.sh
 push.sh
+
+# Rebuild log
+rebuild.log
