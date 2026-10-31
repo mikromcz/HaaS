@@ -1,5 +1,5 @@
 # HaaS (Honeypot as a Service) Proxy Dockerfile
-# v202600509
+# v20261031
 
 # Use Alpine with preinstalled Python is the easiest
 FROM python:3.14-alpine
@@ -22,12 +22,21 @@ ENV TWISTED_LOG_LEVEL="error"
 # Set a default LOG_LEVEL if not provided
 ENV LOG_LEVEL=info
 
-# Update and install necessary packages
-RUN apk add --update --no-cache openssh sshpass
+# Upgrade base image packages to pick up security fixes, then install necessary packages
+# haas_proxy calls "sshpass ... ssh" to connect to the HaaS server - only SSH client is needed, not sshd
+RUN apk upgrade --no-cache && \
+    apk add --no-cache openssh-client sshpass
 
-# Install haas_proxy
-RUN pip3 install --upgrade pip && \
-    pip3 install --no-cache haas-proxy
+# Install haas_proxy and its dependencies (twisted, requests, cachetools)
+RUN pip3 install --no-cache-dir --upgrade haas-proxy && \
+    # Pre-generate Twisted plugin cache (dropin.cache) as root, so non-root user
+    # doesn't need write access to site-packages (replaces former chmod 777).
+    # Same sys.path tweak as haas_proxy/__main__.py, so haas_proxy/twisted/plugins is included too
+    python3 -c "import sys, sysconfig; sys.path.append(sysconfig.get_paths()['purelib'] + '/haas_proxy'); from twisted.plugin import IPlugin, getPlugins; list(getPlugins(IPlugin))" && \
+    # pip is not needed at runtime. Its vendored libs (setuptools, msgpack, urllib3...)
+    # are the only findings in vulnerability scans, so remove it completely
+    pip3 uninstall -y pip && \
+    rm -rf /root/.cache
 
 # Some labels with credit to CZ.NIC
 LABEL org.opencontainers.image.title="HaaS (Honeypot as a Service)"
@@ -47,18 +56,17 @@ LABEL org.opencontainers.image.base.name=python:alpine
 # Create working directory
 WORKDIR /haas
 
-# Run as non-root user, but we have to add permisions for /haas/haas.pid file (and twisted plugins)
-RUN chmod -R 777 /usr/local/lib/python3.*/site-packages/twisted/plugins/ /usr/local/lib/python3.*/site-packages/haas_proxy/twisted/plugins/ && \
-    adduser -D haas && \
-    chown haas -R /haas
+# Run as non-root user. Nothing needs to be writable (no PID file, logs go to stdout)
+RUN adduser -D -u 1000 -s /sbin/nologin haas
 USER haas
 
 # Expose haas port
 EXPOSE 2222
 
-# Healthcheck to see if cron is running
+# Healthcheck to see if haas_proxy is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
     CMD pgrep -f "haas_proxy" || exit 1
 
 # Final command. Without square brackets it is run from shell, bracketed version never work for me.
-CMD ["sh", "-c", "python3 -m haas_proxy --nodaemon --pidfile /haas/haas.pid haas_proxy --device-token ${DEVICE_TOKEN} --log-level ${LOG_LEVEL}"]
+# --pidfile '' disables PID file (not needed in container, healthcheck uses pgrep)
+CMD ["sh", "-c", "python3 -m haas_proxy --nodaemon --pidfile '' haas_proxy --device-token ${DEVICE_TOKEN} --log-level ${LOG_LEVEL}"]

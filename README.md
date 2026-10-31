@@ -50,7 +50,6 @@ A honeypot is specialized software that simulates a vulnerable system to attract
 Create a `docker-compose.yml` file:
 
 ```yaml
-version: "3.8"
 services:
   haas:
     container_name: haas
@@ -59,9 +58,12 @@ services:
     hostname: haas
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
     environment:
-      - PUID=1000
-      - PGID=1000
       - TZ=Europe/Prague  # Adjust to your timezone
       - DEVICE_TOKEN=YOUR_DEVICE_TOKEN_HERE
       - LOG_LEVEL=info    # Options: error, warning, info, debug
@@ -87,6 +89,9 @@ docker run -d \
   --name haas \
   --restart=unless-stopped \
   --security-opt=no-new-privileges:true \
+  --cap-drop=ALL \
+  --read-only \
+  --tmpfs /tmp \
   -e "DEVICE_TOKEN=YOUR_DEVICE_TOKEN_HERE" \
   -e "LOG_LEVEL=info" \
   -e "TZ=Europe/Prague" \
@@ -122,8 +127,8 @@ Internet (port 22) → Router → Docker Host (port 2222) → Container (port 22
 | `DEVICE_TOKEN` | ✅ Yes | - | Your unique device token from haas.nic.cz |
 | `LOG_LEVEL` | ❌ No | `info` | Logging verbosity: `error`, `warning`, `info`, `debug` |
 | `TZ` | ❌ No | `UTC` | Container timezone |
-| `PUID` | ❌ No | `1000` | User ID for running the service |
-| `PGID` | ❌ No | `1000` | Group ID for running the service |
+
+The proxy always runs as the non-root user `haas` (UID 1000) inside the container. No volumes are needed.
 
 ## Monitoring and Logs
 
@@ -168,6 +173,16 @@ These are **normal** and indicate your honeypot is receiving and rejecting malic
 - **Monitor your logs** for any unexpected activity
 - **Keep your real systems updated** and secure
 
+### Container Hardening
+
+The image is built to keep the attack surface small:
+
+- Runs as the **non-root user** `haas` (UID 1000)
+- **pip is removed** after installing `haas-proxy`; it is not needed at runtime and its bundled libraries were the only findings in vulnerability scans
+- Only the **SSH client** (`openssh-client`) and `sshpass` are installed - no SSH server
+- The Twisted plugin cache is generated at build time, so `site-packages` doesn't need to be writable
+- Works with `cap_drop: ALL`, `no-new-privileges` and a **read-only root filesystem** (only `/tmp` needs to be writable, see the examples above; no PID file is written)
+
 ## Troubleshooting
 
 ### Common Issues
@@ -208,7 +223,7 @@ This is an unofficial Docker implementation. For:
 ## Version Information
 
 - **Current Version:** 2.0.2 (released 2020-07-29)
-- **Base Image:** `python:3.14-alpine`
+- **Base Image:** `python:3.14-alpine` (rebuilt regularly to pick up security fixes)
 - **HaaS Proxy:** Latest version from PyPI
 
 ## Links
